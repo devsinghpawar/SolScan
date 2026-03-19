@@ -46,7 +46,10 @@ interface DexScreenerResponse {
 }
 
 export default function TokenDetailScreen() {
-  const { mint, amount } = useLocalSearchParams<{ mint: string; amount?: string }>();
+  const { mint, amount } = useLocalSearchParams<{
+    mint: string;
+    amount?: string;
+  }>();
   const router = useRouter();
   const [tokenData, setTokenData] = useState<TokenPair | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,17 +78,40 @@ export default function TokenDetailScreen() {
       console.log("[TokenDetail] Response status:", res.status);
 
       if (!res.ok) {
-        console.log("[TokenDetail] Response not OK:", res.status, res.statusText);
+        console.log(
+          "[TokenDetail] Response not OK:",
+          res.status,
+          res.statusText,
+        );
         throw new Error(`Failed to fetch: ${res.status}`);
       }
 
       const data: DexScreenerResponse = await res.json();
-      console.log("[TokenDetail] Response data:", JSON.stringify(data, null, 2));
+      console.log(
+        "[TokenDetail] Response data:",
+        JSON.stringify(data, null, 2),
+      );
       console.log("[TokenDetail] Pairs count:", data.pairs?.length || 0);
 
+      // if (!data.pairs || data.pairs.length === 0) {
+      //   console.log("[TokenDetail] No pairs found for this token");
+      //   throw new Error("Token not found on DexScreener");
+      // }
+
+      // Replace the throw new Error block with this:
       if (!data.pairs || data.pairs.length === 0) {
-        console.log("[TokenDetail] No pairs found for this token");
-        throw new Error("Token not found on DexScreener");
+        console.log("[TokenDetail] No pairs found, setting fallback data");
+        setTokenData({
+          baseToken: {
+            name: "Unknown Token",
+            symbol: "???",
+            address: mint,
+          },
+          priceUsd: "0",
+          dexId: "None",
+          // Add other default values needed for your interface
+        } as any);
+        return;
       }
 
       // get the pair with highest liquidity
@@ -95,7 +121,11 @@ export default function TokenDetailScreen() {
         return currentLiq > bestLiq ? current : best;
       }, data.pairs[0]);
 
-      console.log("[TokenDetail] Best pair:", bestPair.baseToken.name, bestPair.baseToken.symbol);
+      console.log(
+        "[TokenDetail] Best pair:",
+        bestPair.baseToken.name,
+        bestPair.baseToken.symbol,
+      );
       setTokenData(bestPair);
     } catch (e: any) {
       console.log("[TokenDetail] Error:", e.message);
@@ -190,7 +220,10 @@ export default function TokenDetailScreen() {
         {/* Token Header */}
         <View style={s.tokenHeader}>
           {tokenData.info?.imageUrl ? (
-            <Image source={{ uri: tokenData.info.imageUrl }} style={s.tokenLogo} />
+            <Image
+              source={{ uri: tokenData.info.imageUrl }}
+              style={s.tokenLogo}
+            />
           ) : (
             <View style={[s.tokenLogo, s.placeholderLogo]}>
               <Text style={s.placeholderText}>
@@ -207,13 +240,23 @@ export default function TokenDetailScreen() {
           <Text style={s.cardLabel}>Current Price</Text>
           <View style={s.priceRow}>
             <Text style={s.priceText}>{formatPrice(tokenData.priceUsd)}</Text>
-            <View style={[s.changeTag, isPositive ? s.changePositive : s.changeNegative]}>
+            <View
+              style={[
+                s.changeTag,
+                isPositive ? s.changePositive : s.changeNegative,
+              ]}
+            >
               <Ionicons
                 name={isPositive ? "caret-up" : "caret-down"}
                 size={14}
                 color={isPositive ? "#14F195" : "#EF4444"}
               />
-              <Text style={[s.changeText, isPositive ? s.changeTextPositive : s.changeTextNegative]}>
+              <Text
+                style={[
+                  s.changeText,
+                  isPositive ? s.changeTextPositive : s.changeTextNegative,
+                ]}
+              >
                 {Math.abs(priceChange).toFixed(2)}%
               </Text>
             </View>
@@ -301,7 +344,10 @@ export default function TokenDetailScreen() {
             <Text style={s.actionBtnText}>DexScreener</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[s.actionBtn, s.actionBtnSecondary]} onPress={openSolscan}>
+          <TouchableOpacity
+            style={[s.actionBtn, s.actionBtnSecondary]}
+            onPress={openSolscan}
+          >
             <Ionicons name="search" size={18} color="#14F195" />
             <Text style={s.actionBtnTextSecondary}>Solscan</Text>
           </TouchableOpacity>

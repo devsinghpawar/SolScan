@@ -98,7 +98,10 @@ export default function WalletScreen() {
   };
 
   const tryExample = () => {
-    setAddress("4S93Yqn6yU15NYJZfC1ihAVvdnsxoRMD7X3Z4Dx59soU");
+    setAddress("So11111111111111111111111111111111111111112");
+    // setAddress("86xCnPeV69n6t3DnyGvkKobf9FdN2H9oiVDdaMpo2MMY");
+    // setAddress("JUPyiwrYJFskRpuBvWVwsEkR9qR4sAW8YqtRgnVcgS");
+    // setAddress("6p6xgHy9YJbU5hHMBdWH1asSXXY7GvA8mNDy5Q4hMndC");
   };
 
   return (
@@ -153,7 +156,7 @@ export default function WalletScreen() {
             <Text style={s.section}>Tokens ({tokens.length})</Text>
             <FlatList
               data={tokens}
-              keyExtractor={(t) => t.mint}
+              keyExtractor={(t, i) => `${t.mint}-${i}`}
               scrollEnabled={false}
               renderItem={({ item }) => (
                 <TouchableOpacity
@@ -182,7 +185,7 @@ export default function WalletScreen() {
             <Text style={s.section}>Recent Transactions</Text>
             <FlatList
               data={txns}
-              keyExtractor={(t) => t.sig}
+              keyExtractor={(t, i) => `${t.sig}-${i}`}
               scrollEnabled={false}
               renderItem={({ item }) => (
                 <TouchableOpacity
