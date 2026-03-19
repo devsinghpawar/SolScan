@@ -100,8 +100,6 @@ export default function WalletScreen() {
   const tryExample = () => {
     setAddress("So11111111111111111111111111111111111111112");
     // setAddress("86xCnPeV69n6t3DnyGvkKobf9FdN2H9oiVDdaMpo2MMY");
-    // setAddress("JUPyiwrYJFskRpuBvWVwsEkR9qR4sAW8YqtRgnVcgS");
-    // setAddress("6p6xgHy9YJbU5hHMBdWH1asSXXY7GvA8mNDy5Q4hMndC");
   };
 
   return (
