@@ -16,58 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-
-// solana rpc endpoint
-const RPC = "https://api.mainnet-beta.solana.com";
-
-const rpc = async (method: string, params: any[]) => {
-  const res = await fetch(RPC, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-  });
-  const json = await res.json();
-  if (json.error) throw new Error(json.error.message);
-  return json.result;
-};
-
-const getBalance = async (addr: string) => {
-  const result = await rpc("getBalance", [addr]);
-  return result.value / 1_000_000_000;
-};
-
-const getTokens = async (addr: string) => {
-  const result = await rpc("getTokenAccountsByOwner", [
-    addr,
-    { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
-    { encoding: "jsonParsed" },
-  ]);
-  return (result.value || [])
-    .map((a: any) => ({
-      mint: a.account.data.parsed.info.mint,
-      amount: a.account.data.parsed.info.tokenAmount.uiAmount,
-    }))
-    .filter((t: any) => t.amount > 0);
-};
-
-const getTxns = async (addr: string) => {
-  const sigs = await rpc("getSignaturesForAddress", [addr, { limit: 10 }]);
-  return sigs.map((s: any) => ({
-    sig: s.signature,
-    time: s.blockTime,
-    ok: !s.err,
-  }));
-};
-
-const short = (s: string, n = 4) => `${s.slice(0, n)}...${s.slice(-n)}`;
-
-const timeAgo = (ts: number) => {
-  const sec = Math.floor(Date.now() / 1000 - ts);
-  if (sec < 60) return `${sec}s ago`;
-  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
-  if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
-  return `${Math.floor(sec / 86400)}d ago`;
-};
+import { useWalletStore } from "../../src/stores/wallet-store";
 
 export default function WalletScreen() {
   const router = useRouter();
@@ -76,6 +25,69 @@ export default function WalletScreen() {
   const [balance, setBalance] = useState<number | null>(null);
   const [tokens, setTokens] = useState<any[]>([]);
   const [txns, setTxns] = useState<any[]>([]);
+  const addToHistory = useWalletStore((s) => s.addToHistory);
+  const searchHistory = useWalletStore((s) => s.searchHistory);
+  const isDevnet = useWalletStore((s) => s.isDevnet);
+
+  // solana rpc endpoint
+  const RPC = isDevnet
+    ? "https://api.devnet.solana.com"
+    : "https://api.mainnet-beta.solana.com";
+
+  const rpc = async (method: string, params: any[]) => {
+    const res = await fetch(RPC, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+    });
+    const json = await res.json();
+    if (json.error) throw new Error(json.error.message);
+    return json.result;
+  };
+
+  const getBalance = async (addr: string) => {
+    const result = await rpc("getBalance", [addr]);
+    return result.value / 1_000_000_000;
+  };
+
+  const getTokens = async (addr: string) => {
+    const result = await rpc("getTokenAccountsByOwner", [
+      addr,
+      { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
+      { encoding: "jsonParsed" },
+    ]);
+    return (result.value || [])
+      .map((a: any) => ({
+        mint: a.account.data.parsed.info.mint,
+        amount: a.account.data.parsed.info.tokenAmount.uiAmount,
+      }))
+      .filter((t: any) => t.amount > 0);
+  };
+
+  const getTxns = async (addr: string) => {
+    const sigs = await rpc("getSignaturesForAddress", [addr, { limit: 10 }]);
+    return sigs.map((s: any) => ({
+      sig: s.signature,
+      time: s.blockTime,
+      ok: !s.err,
+    }));
+  };
+
+  const short = (s: string, n = 4) => `${s.slice(0, n)}...${s.slice(-n)}`;
+
+  const timeAgo = (ts: number) => {
+    const sec = Math.floor(Date.now() / 1000 - ts);
+    if (sec < 60) return `${sec}s ago`;
+    if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+    if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+    return `${Math.floor(sec / 86400)}d ago`;
+  };
+
+  const handleSearch = async (address: string) => {
+    addToHistory(address);
+
+    search();
+  };
 
   const search = async () => {
     const addr = address.trim();
@@ -107,6 +119,12 @@ export default function WalletScreen() {
       <ScrollView style={s.scroll}>
         <Text style={s.title}>SolScan</Text>
         <Text style={s.subtitle}>Explore any Solana wallet</Text>
+
+        {isDevnet && (
+          <View style={s.devnetBanner}>
+            <Text style={s.devnetText}>🔧 DEVNET</Text>
+          </View>
+        )}
 
         <View style={s.inputContainer}>
           <TextInput
@@ -239,6 +257,20 @@ const s = StyleSheet.create({
     fontSize: 15,
     marginBottom: 28,
   },
+  devnetBanner: {
+    backgroundColor: "#EF4444",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignSelf: "flex-start",
+    marginBottom: 16,
+  },
+  devnetText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
   inputContainer: {
     backgroundColor: "#16161D",
     borderRadius: 16,
