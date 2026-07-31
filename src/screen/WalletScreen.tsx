@@ -151,7 +151,7 @@ export function WalletScreen() {
           onPress={tryExample}
           activeOpacity={0.7}
         >
-          <Text style={s.btnGhostText}>Demo</Text>
+          <Text style={s.btnGhostText}>D</Text>
         </TouchableOpacity>
       </View>
 

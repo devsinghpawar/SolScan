@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+// import { CryptoIcon } from "@vnaidin/react-native-cryptocurrency-icons";
 import { CryptoIcon } from "@vnaidin/react-native-cryptocurrency-icons";
 
 export function SwapScreen() {
@@ -118,7 +119,7 @@ export function SwapScreen() {
       {/* </View> */}
 
       <TouchableOpacity style={s.swapButtonContainer} onPress={haldleSwap}>
-        <Text style={s.swapText}>Swap</Text>
+        <Text style={s.swapText}>ohhh</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -128,7 +129,7 @@ const s = StyleSheet.create({
   scrollViewContainer: {
     margin: 20,
     flex: 1,
-    // backgroundColor: "#0D0D12",
+    backgroundColor: "#0D0D12",
   },
   title: {
     color: "#FFFFFF",

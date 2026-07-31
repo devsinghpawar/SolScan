@@ -1,4 +1,5 @@
 import { Stack } from "expo-router";
+import { StyleSheet } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootLayout() {
@@ -12,3 +13,9 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+const s = StyleSheet.create({
+  container: {
+    backgroundColor: "#000000",
+  },
+});

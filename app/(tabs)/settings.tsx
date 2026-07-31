@@ -1,16 +1,16 @@
 import { useRouter } from "expo-router";
-import { Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Settings() {
   const router = useRouter();
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={styles.scrollViewContainer}>
       <View>
-        <Text>Setting</Text>
+        <Text style={styles.textColor}>Setting</Text>
         <TouchableOpacity onPress={() => router.push("/orders")}>
-          <Text>My order</Text>
+          <Text style={styles.textColor}>My order</Text>
         </TouchableOpacity>
         {/* <TouchableOpacity>
           <Text>My order</Text>
@@ -19,3 +19,13 @@ export default function Settings() {
     </SafeAreaView>
   );
 }
+const styles = StyleSheet.create({
+  scrollViewContainer: {
+    padding: 20,
+    flex: 1,
+    backgroundColor: "#0D0D12",
+  },
+  textColor: {
+    color: "#fff",
+  },
+});

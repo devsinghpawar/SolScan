@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-// import { CryptoIcon } from "@vnaidin/react-native-cryptocurrency-icons";
+import { CryptoIcon } from "@vnaidin/react-native-cryptocurrency-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SwapScreen() {
@@ -63,7 +63,7 @@ export default function SwapScreen() {
         <View style={s.swapCryptoBox}>
           <View style={s.flexContainer}>
             <TouchableOpacity style={s.tokenSelector}>
-              {/* <CryptoIcon symbol="eth" originSize={32} /> */}
+              <CryptoIcon symbol="eth" originSize={32} />
 
               <Text style={s.swapCoinText}>{fromToken}</Text>
 
@@ -99,7 +99,7 @@ export default function SwapScreen() {
         <View style={s.swapCryptoBox}>
           <View style={s.flexContainer}>
             <TouchableOpacity style={s.tokenSelector}>
-              {/* <CryptoIcon symbol="dai" originSize={32} /> */}
+              <CryptoIcon symbol="dai" originSize={32} />
 
               <Text style={s.swapCoinText}>{toToken}</Text>
 
@@ -129,9 +129,9 @@ export default function SwapScreen() {
 
 const s = StyleSheet.create({
   scrollViewContainer: {
-    margin: 20,
+    padding: 20,
     flex: 1,
-    // backgroundColor: "#0D0D12",
+    backgroundColor: "#0D0D12",
   },
   title: {
     color: "#FFFFFF",
