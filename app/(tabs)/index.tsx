@@ -84,17 +84,12 @@ export default function WalletScreen() {
     return `${Math.floor(sec / 86400)}d ago`;
   };
 
-  const searchFromHistory = async (address: string) => {
-    addToHistory(address); //Save to history automatically
-
-    search();
-  };
-
   const search = async () => {
     const addr = address.trim();
     if (!addr) return Alert.alert("Enter a wallet address");
 
     setLoading(true);
+    addToHistory(addr);
     try {
       const [bal, tok, tx] = await Promise.all([
         getBalance(addr),
@@ -104,10 +99,28 @@ export default function WalletScreen() {
       setBalance(bal);
       setTokens(tok);
       setTxns(tx);
-    } catch (e: any) {
-      Alert.alert("Error", e.message);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Unknown error";
+      Alert.alert("Error", message);
     }
     setLoading(false);
+  };
+
+  const searchFromHistory = (addr: string) => {
+    setAddress(addr);
+    addToHistory(addr);
+    setLoading(true);
+    Promise.all([getBalance(addr), getTokens(addr), getTxns(addr)])
+      .then(([bal, tok, tx]) => {
+        setBalance(bal);
+        setTokens(tok);
+        setTxns(tx);
+      })
+      .catch((e: unknown) => {
+        const message = e instanceof Error ? e.message : "Unknown error";
+        Alert.alert("Error", message);
+      })
+      .finally(() => setLoading(false));
   };
 
   const tryExample = () => {
@@ -163,28 +176,29 @@ export default function WalletScreen() {
             )}
           </TouchableOpacity>
 
-          {!address ? (
-            <TouchableOpacity style={s.btnGhost} onPress={tryExample}>
-              <Text style={s.btnGhostText}>Demo</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={s.btnGhost} onPress={clearResults}>
-              <Text style={s.btnGhostText}>Clear</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={s.btnGhost}
+            onPress={address ? clearResults : tryExample}
+          >
+            <Text style={s.btnGhostText}>{address ? "Clean" : "Demo"}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Search History - show before any search */}
         {searchHistory.length > 0 && balance === null && (
-          <View>
-            <Text>Recent Searches</Text>
+          <View style={s.historySection}>
+            <Text style={s.historyTitle}>Recent Searches</Text>
             {searchHistory.slice(0, 5).map((addr) => (
               <TouchableOpacity
                 key={addr}
-                // style={}
+                style={s.historyItem}
                 onPress={() => searchFromHistory(addr)}
               >
-                <Text>{addr}</Text>
+                <Ionicons name="time-outline" size={16} color="#6B7280" />
+                <Text style={s.historyAddress} numberOfLines={1}>
+                  {short(addr, 8)}
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color="#6B7280" />
               </TouchableOpacity>
             ))}
           </View>
@@ -326,6 +340,34 @@ const s = StyleSheet.create({
     fontWeight: "500",
   },
 
+  historySection: {
+    marginTop: 24,
+  },
+  historyTitle: {
+    color: "#6B7280",
+    fontSize: 13,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 12,
+  },
+  historyItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#16161D",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    gap: 12,
+  },
+  historyAddress: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontFamily: "monospace",
+  },
   inputContainer: {
     backgroundColor: "#16161D",
     borderRadius: 16,
