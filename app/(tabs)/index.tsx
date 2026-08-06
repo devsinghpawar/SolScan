@@ -1,5 +1,3 @@
-// app/(tabs)/index.tsx
-// wallet screen - home tab at "/" route
 import { useState } from "react";
 import {
   View,
@@ -25,11 +23,14 @@ export default function WalletScreen() {
   const [balance, setBalance] = useState<number | null>(null);
   const [tokens, setTokens] = useState<any[]>([]);
   const [txns, setTxns] = useState<any[]>([]);
+
+  // wallet store
   const addToHistory = useWalletStore((s) => s.addToHistory);
   const searchHistory = useWalletStore((s) => s.searchHistory);
   const isDevnet = useWalletStore((s) => s.isDevnet);
+  const toggleNetwork = useWalletStore((s) => s.toggleNetwork);
 
-  // solana rpc endpoint
+  // Use the correct RPC based on network toggle
   const RPC = isDevnet
     ? "https://api.devnet.solana.com"
     : "https://api.mainnet-beta.solana.com";
@@ -83,8 +84,8 @@ export default function WalletScreen() {
     return `${Math.floor(sec / 86400)}d ago`;
   };
 
-  const handleSearch = async (address: string) => {
-    addToHistory(address);
+  const searchFromHistory = async (address: string) => {
+    addToHistory(address); //Save to history automatically
 
     search();
   };
@@ -114,17 +115,28 @@ export default function WalletScreen() {
     // setAddress("86xCnPeV69n6t3DnyGvkKobf9FdN2H9oiVDdaMpo2MMY");
   };
 
+  const clearResults = () => {
+    setAddress("");
+    setBalance(null);
+    setTokens([]);
+    setTxns([]);
+  };
+
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
       <ScrollView style={s.scroll}>
-        <Text style={s.title}>SolScan</Text>
-        <Text style={s.subtitle}>Explore any Solana wallet</Text>
-
-        {isDevnet && (
-          <View style={s.devnetBanner}>
-            <Text style={s.devnetText}>🔧 DEVNET</Text>
+        <View style={s.header}>
+          <View>
+            <Text style={s.title}>SolScan</Text>
+            <Text style={s.subtitle}>Explore any Solana wallet</Text>
           </View>
-        )}
+
+          {/* Network indicator */}
+          <TouchableOpacity style={s.networkToggle} onPress={toggleNetwork}>
+            <View style={[s.networkDot, isDevnet && s.networkDotDevnet]} />
+            <Text style={s.networkText}>{isDevnet ? "Devnet" : "Mainnet"}</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={s.inputContainer}>
           <TextInput
@@ -151,10 +163,32 @@ export default function WalletScreen() {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity style={s.btnGhost} onPress={tryExample}>
-            <Text style={s.btnGhostText}>Demo</Text>
-          </TouchableOpacity>
+          {!address ? (
+            <TouchableOpacity style={s.btnGhost} onPress={tryExample}>
+              <Text style={s.btnGhostText}>Demo</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={s.btnGhost} onPress={clearResults}>
+              <Text style={s.btnGhostText}>Clear</Text>
+            </TouchableOpacity>
+          )}
         </View>
+
+        {/* Search History - show before any search */}
+        {searchHistory.length > 0 && balance === null && (
+          <View>
+            <Text>Recent Searches</Text>
+            {searchHistory.slice(0, 5).map((addr) => (
+              <TouchableOpacity
+                key={addr}
+                // style={}
+                onPress={() => searchFromHistory(addr)}
+              >
+                <Text>{addr}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {balance !== null && (
           <View style={s.card}>
@@ -246,6 +280,12 @@ const s = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 16,
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 28,
+  },
   title: {
     color: "#FFFFFF",
     fontSize: 32,
@@ -257,18 +297,33 @@ const s = StyleSheet.create({
     fontSize: 15,
     marginBottom: 28,
   },
-  devnetBanner: {
-    backgroundColor: "#EF4444",
+
+  networkToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#16161D",
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 8,
-    alignSelf: "flex-start",
-    marginBottom: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    gap: 6,
   },
-  devnetText: {
-    color: "#FFFFFF",
+  networkDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#14F195",
+  },
+
+  networkDotDevnet: {
+    backgroundColor: "#F59E0B",
+  },
+
+  networkText: {
+    color: "#9CA3AF",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "500",
   },
 
   inputContainer: {
