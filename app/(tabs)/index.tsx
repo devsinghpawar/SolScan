@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useWalletStore } from "../../src/stores/wallet-store";
+import FavoriteButton from "../../src/components/FavoriteButton";
 
 export default function WalletScreen() {
   const router = useRouter();
@@ -206,6 +207,9 @@ export default function WalletScreen() {
 
         {balance !== null && (
           <View style={s.card}>
+            <View style={s.favoriteWrapper}>
+              <FavoriteButton address={address.trim()} />
+            </View>
             <Text style={s.label}>SOL Balance</Text>
             <View style={s.balanceRow}>
               <Text style={s.balance}>{balance.toFixed(4)}</Text>
@@ -421,6 +425,11 @@ const s = StyleSheet.create({
     marginTop: 28,
     borderWidth: 1,
     borderColor: "#2A2A35",
+  },
+  favoriteWrapper: {
+    position: "absolute",
+    top: 12,
+    right: 12,
   },
   label: {
     color: "#6B7280",
