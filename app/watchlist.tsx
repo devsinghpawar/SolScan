@@ -1,28 +1,85 @@
+import { useState, useEffect, useCallback } from "react";
 import {
-  FlatList,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useWalletStore } from "../src/stores/wallet-store";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useWalletStore } from "../src/stores/wallet-store";
 
-interface watchListItem {
+interface WatchlistItem {
   address: string;
   balance: number | null;
   loading: boolean;
 }
 
-export default function watchlistScreen() {
+export default function WatchlistScreen() {
   const router = useRouter();
-  const favorites = useWalletStore((store) => store.favorites);
-  const isDevnet = useWalletStore((store) => store.isDevnet);
+  const favorites = useWalletStore((s) => s.favorites);
+  const removeFavorite = useWalletStore((s) => s.removeFavorite);
+  const isDevnet = useWalletStore((s) => s.isDevnet);
 
-  const [items, isItems] = useState<watchListItem[]>([]);
+  const [items, setItems] = useState<WatchlistItem[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const RPC = isDevnet
+    ? "https://api.devnet.solana.com"
+    : "https://api.mainnet-beta.solana.com";
+
+  const fetchBalances = useCallback(async () => {
+    const results = await Promise.all(
+      favorites.map(async (address) => {
+        try {
+          const res = await fetch(RPC, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              id: 1,
+              method: "getBalance",
+              params: [address],
+            }),
+          });
+          const json = await res.json();
+          return {
+            address,
+            balance: (json.result?.value || 0) / 1e9,
+            loading: false,
+          };
+        } catch {
+          return { address, balance: null, loading: false };
+        }
+      }),
+    );
+    setItems(results);
+  }, [favorites, RPC]);
+
+  useEffect(() => {
+    if (favorites.length > 0) {
+      setItems(
+        favorites.map((a) => ({ address: a, balance: null, loading: true })),
+      );
+      fetchBalances();
+    } else {
+      setItems([]);
+    }
+  }, [favorites, fetchBalances]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchBalances();
+    setRefreshing(false);
+  };
+
+  const shortenAddress = (addr: string) =>
+    `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
@@ -34,12 +91,12 @@ export default function watchlistScreen() {
         <Text style={s.title}>Watchlist</Text>
         <Text style={s.subtitle}>
           {favorites.length} wallet{favorites.length !== 1 ? "s" : ""} ·{" "}
-          {isDevnet ? "Devnet" : "Mainnet"}{" "}
+          {isDevnet ? "Devnet" : "Mainnet"}
         </Text>
 
         {favorites.length === 0 ? (
           <View style={s.emptyContainer}>
-            <Ionicons name="heart-outline" size={24} color="#fff" />
+            <Ionicons name="heart-outline" size={64} color="#2A2A35" />
             <Text style={s.emptyTitle}>No Wallets Saved</Text>
             <Text style={s.emptyText}>
               Search for a wallet and tap the heart to save it here.
@@ -50,10 +107,51 @@ export default function watchlistScreen() {
             data={items}
             keyExtractor={(item) => item.address}
             contentContainerStyle={{ paddingBottom: 100 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#14F195"
+                colors={["#14F195"]}
+              />
+            }
             renderItem={({ item }) => (
-              <TouchableOpacity style={s.card}>
-                {" "}
-                {item.address}{" "}
+              <TouchableOpacity
+                style={s.card}
+                onLongPress={() => {
+                  Alert.alert(
+                    "Remove from Watchlist?",
+                    shortenAddress(item.address),
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Remove",
+                        style: "destructive",
+                        onPress: () => removeFavorite(item.address),
+                      },
+                    ],
+                  );
+                }}
+              >
+                <View style={s.cardLeft}>
+                  <View style={s.iconBox}>
+                    <Ionicons name="wallet" size={20} color="#14F195" />
+                  </View>
+                  <Text style={s.cardAddress} numberOfLines={1}>
+                    {shortenAddress(item.address)}
+                  </Text>
+                </View>
+                <View style={s.cardRight}>
+                  {item.loading ? (
+                    <ActivityIndicator size="small" color="#14F195" />
+                  ) : item.balance !== null ? (
+                    <Text style={s.cardBalance}>
+                      {item.balance.toFixed(4)} SOL
+                    </Text>
+                  ) : (
+                    <Text style={s.cardError}>Error</Text>
+                  )}
+                </View>
               </TouchableOpacity>
             )}
           />
@@ -87,16 +185,8 @@ const s = StyleSheet.create({
     fontSize: 15,
     marginBottom: 24,
   },
-
-  textcolor: {
-    color: "#FFF",
-  },
-  favoriteList: {
-    color: "#FFF",
-  },
-
   emptyContainer: {
-    // flex: 1,
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingBottom: 100,
@@ -108,7 +198,7 @@ const s = StyleSheet.create({
     marginTop: 16,
   },
   emptyText: {
-    color: "#687280",
+    color: "#6B7280",
     fontSize: 14,
     textAlign: "center",
     marginTop: 8,
