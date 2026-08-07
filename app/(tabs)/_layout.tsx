@@ -2,8 +2,10 @@
 // tab layout - defines bottom tab navigation
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
@@ -16,7 +18,11 @@ export default function TabLayout() {
           borderTopWidth: 1,
           paddingBottom: 8,
           paddingTop: 12,
-          height: 70,
+          height: 30 + insets.bottom,
+          // paddingBottom: insets.bottom,
+        },
+        tabBarLabelStyle: {
+          marginTop: -10,
         },
         // active/inactive colors
         tabBarActiveTintColor: "#14F195",
@@ -29,7 +35,12 @@ export default function TabLayout() {
         options={{
           title: "Wallet",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="wallet" size={size} color={color} />
+            <Ionicons
+              name="wallet"
+              size={size}
+              color={color}
+              style={{ marginTop: -20 }}
+            />
           ),
         }}
       />
@@ -38,7 +49,12 @@ export default function TabLayout() {
         options={{
           title: "Swap",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="swap-horizontal" size={size} color={color} />
+            <Ionicons
+              name="swap-horizontal"
+              size={size}
+              color={color}
+              style={{ marginTop: -20 }}
+            />
           ),
         }}
       />
@@ -47,7 +63,12 @@ export default function TabLayout() {
         options={{
           title: "settings",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings" size={size} color={color} />
+            <Ionicons
+              name="settings"
+              size={size}
+              color={color}
+              style={{ marginTop: -20 }}
+            />
           ),
         }}
       />
