@@ -148,9 +148,8 @@ export default function WalletScreen() {
             <Text style={s.subtitle}>Explore any Solana wallet</Text>
           </View>
 
-          <View>
+          <View style={s.headerRight}>
             {/* Network indicator */}
-
             <TouchableOpacity style={s.networkToggle} onPress={toggleNetwork}>
               <View style={[s.networkDot, isDevnet && s.networkDotDevnet]} />
               <Text style={s.networkText}>
@@ -158,6 +157,7 @@ export default function WalletScreen() {
               </Text>
             </TouchableOpacity>
 
+            {/* Wallet Connect button */}
             <ConnectButton
               connected={wallet.connected}
               connecting={wallet.connecting}
@@ -320,6 +320,14 @@ const s = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 28,
   },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+    maxWidth: "52%", // I have to change this latter
+  },
   title: {
     color: "#FFFFFF",
     fontSize: 32,
@@ -329,7 +337,6 @@ const s = StyleSheet.create({
   subtitle: {
     color: "#6B7280",
     fontSize: 15,
-    marginBottom: 28,
   },
 
   networkToggle: {
