@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -131,6 +131,13 @@ export default function WalletScreen() {
     setAddress("So11111111111111111111111111111111111111112");
     // setAddress("86xCnPeV69n6t3DnyGvkKobf9FdN2H9oiVDdaMpo2MMY");
   };
+  console.log("line 134", wallet.connected);
+  console.log("wallet.publicKey", wallet.publicKey);
+  console.log("address", address);
+
+  useEffect(() => {
+    setAddress(wallet.publicKey?.toBase58() ?? "");
+  }, [wallet.publicKey]);
 
   const clearResults = () => {
     setAddress("");

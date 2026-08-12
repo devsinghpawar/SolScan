@@ -1,5 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import {
+  TouchableOpacity,
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 
 interface Props {
   connected: boolean;
@@ -16,6 +22,27 @@ export function ConnectButton({
   onConnect,
   onDisconnect,
 }: Props) {
+  if (connecting) {
+    return (
+      <View style={[s.button, s.connecting]}>
+        <ActivityIndicator size="small" color="#fff" />
+        <Text style={s.buttonText}>Connecting...</Text>
+      </View>
+    );
+  }
+
+  if (connected && publicKey) {
+    return (
+      <TouchableOpacity style={[s.button, s.connected]} onPress={onDisconnect}>
+        <Ionicons name="wallet" size={18} color="#14F195" />
+        <Text style={s.connectedText}>
+          {publicKey.slice(0, 4)}...{publicKey.slice(-4)}
+        </Text>
+        <Ionicons name="close-circle-outline" size={16} color="#888" />
+      </TouchableOpacity>
+    );
+  }
+
   return (
     <TouchableOpacity style={[s.button, s.disconnected]} onPress={onConnect}>
       <Ionicons name="wallet-outline" size={18} color={"#fff"} />
@@ -35,9 +62,23 @@ const s = StyleSheet.create({
   disconnected: {
     backgroundColor: "#9945FF",
   },
+  connected: {
+    backgroundColor: "rgba(20, 241, 149, 0.1)",
+    borderColor: "#14F195",
+  },
+  connecting: {
+    backgroundColor: "#16161D",
+    borderColor: "#2A2A35",
+  },
   buttonText: {
-    color: "#fff",
-    fontSize: 14,
+    color: "#FFFFFF",
+    fontSize: 13,
     fontWeight: "600",
+  },
+  connectedText: {
+    color: "#14F195",
+    fontSize: 13,
+    fontWeight: "600",
+    fontFamily: "monospace",
   },
 });
