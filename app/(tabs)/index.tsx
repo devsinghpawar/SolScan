@@ -250,7 +250,7 @@ export default function WalletScreen() {
                   style={s.sendNav}
                   onPress={() => router.push("/send")}
                 >
-                  <Ionicons />
+                  <Ionicons name="paper-plane" size={18} color="#0D0D12" />
                   <Text style={s.sendNavText}>Send SOL</Text>
                 </TouchableOpacity>
               )}
