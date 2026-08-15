@@ -17,6 +17,24 @@ export default function SendScreen() {
   const router = useRouter();
   const wallet = useWallet();
 
+  console.log("wallet:", wallet);
+  console.log(wallet.connected);
+
+  if (!wallet.connected) {
+    return (
+      <View style={s.center}>
+        <Ionicons name="wallet-outline" size={64} color="#333" />
+        <Text style={s.emptyTitle}>Wallet Not Connected</Text>
+        <Text style={s.emptyText}>
+          Connect your wallet from the Explorer tab first.
+        </Text>
+        <TouchableOpacity style={s.backButton} onPress={() => router.back()}>
+          <Text style={s.backButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={s.container}
