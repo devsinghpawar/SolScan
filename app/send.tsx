@@ -1,17 +1,22 @@
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useWallet } from "../src/hooks/useWallet";
 
 export default function SendScreen() {
   const router = useRouter();
+  const wallet = useWallet();
+
   return (
     <KeyboardAvoidingView
       style={s.container}
@@ -25,7 +30,45 @@ export default function SendScreen() {
         <Text style={s.title}> Send screen</Text>
         <View style={{ width: 24 }} />
       </View>
-      <View></View>
+
+      <View style={s.card}>
+        <Text style={s.cardLabel}>From</Text>
+        <Text style={s.cardAddress}>{}</Text>
+      </View>
+
+      <View style={s.inputGroup}>
+        <Text style={s.inputLabel}>Recipient Address</Text>
+        <TextInput
+          style={s.input}
+          placeholder="Paste Solana address..."
+          placeholderTextColor="#555"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+      </View>
+
+      <View style={s.inputGroup}>
+        <Text style={s.inputLabel}>Amount (SOL)</Text>
+        <TextInput
+          style={s.input}
+          placeholder="0.0"
+          placeholderTextColor="#555"
+          keyboardType="decimal-pad"
+        />
+      </View>
+
+      <TouchableOpacity
+        style={[s.sendButton, wallet.sending && s.sendButtonDisabled]}
+        disabled={wallet.sending}
+      >
+        {wallet.sending ? (
+          <ActivityIndicator color="#0a0a1a" />
+        ) : (
+          <Text style={s.sendButtonText}>Send SOL</Text>
+        )}
+      </TouchableOpacity>
+
+      <Text style={s.feeText}>Network fee: ~0.000005 SOL ($0.001)</Text>
     </KeyboardAvoidingView>
   );
 }
