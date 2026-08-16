@@ -1,6 +1,8 @@
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   StyleSheet,
   Text,
@@ -8,17 +10,52 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useWallet } from "../src/hooks/useWallet";
+import { useWalletStore } from "../src/stores/wallet-store";
 
 export default function SendScreen() {
   const router = useRouter();
   const wallet = useWallet();
+  const isDevnet = useWalletStore((s) => s.isDevnet);
+
+  const [toAddress, setToAddress] = useState("");
+  const [amount, setAmount] = useState("");
 
   console.log("wallet:", wallet);
   console.log(wallet.connected);
+
+  const handleSend = async () => {
+    if (!toAddress.trim()) return Alert.alert("Enter a recipient address");
+    if (!amount.trim() || isNaN(Number(amount)) || Number(amount) <= 0) {
+      return Alert.alert("Enter a valid amount");
+    }
+
+    try {
+      const sig = await wallet.sendSOL(toAddress.trim(), Number(amount));
+      const baseUrl = isDevnet
+        ? "https://solscan.io/tx"
+        : "https://solscan.io/tx";
+      const clusterParam = isDevnet ? "?cluster=devnet" : "";
+      Alert.alert(
+        "Transaction Sent!",
+        `Sent ${amount} SOL\nSignature: ${sig.slice(0, 20)}...`,
+        [
+          {
+            text: "View on Solscan",
+            onPress: () => Linking.openURL(`${baseUrl}/${sig}${clusterParam}`),
+          },
+          { text: "Done", onPress: () => router.back() },
+        ],
+      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Something went wrong";
+      Alert.alert("Transaction Failed", message);
+    }
+  };
 
   if (!wallet.connected) {
     return (
@@ -51,7 +88,10 @@ export default function SendScreen() {
 
       <View style={s.card}>
         <Text style={s.cardLabel}>From</Text>
-        <Text style={s.cardAddress}>{}</Text>
+        <Text style={s.cardAddress}>
+          {wallet.publicKey?.toBase58().slice(0, 8)}...
+          {wallet.publicKey?.toBase58().slice(-4)}
+        </Text>
       </View>
 
       <View style={s.inputGroup}>
@@ -60,6 +100,8 @@ export default function SendScreen() {
           style={s.input}
           placeholder="Paste Solana address..."
           placeholderTextColor="#555"
+          value={toAddress}
+          onChangeText={setToAddress}
           autoCapitalize="none"
           autoCorrect={false}
         />
@@ -72,12 +114,15 @@ export default function SendScreen() {
           placeholder="0.0"
           placeholderTextColor="#555"
           keyboardType="decimal-pad"
+          value={amount}
+          onChangeText={setAmount}
         />
       </View>
 
       <TouchableOpacity
         style={[s.sendButton, wallet.sending && s.sendButtonDisabled]}
         disabled={wallet.sending}
+        onPress={handleSend}
       >
         {wallet.sending ? (
           <ActivityIndicator color="#0a0a1a" />
