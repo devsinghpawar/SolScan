@@ -12,8 +12,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useWallet } from "../../src/hooks/useWallet";
+import { useWalletStore } from "../../src/stores/wallet-store";
 
 export default function SwapScreen() {
+  const wallet = useWallet();
+  const isDevnet = useWalletStore((s) => s.isDevnet);
+
   const [fromAmount, setFromAmount] = useState("100");
   const [toAmount, setToAmount] = useState("0.28014");
   const [fromToken, setFromToken] = useState("USDC");
@@ -30,7 +35,7 @@ export default function SwapScreen() {
     if (!fromAmount) return Alert.alert("Enter an amount");
     Alert.alert(
       "Swap",
-      `Swapping ${fromAmount} ${fromToken} to ${toAmount} ${toToken}`
+      `Swapping ${fromAmount} ${fromToken} to ${toAmount} ${toToken}`,
     );
   };
 
@@ -38,6 +43,15 @@ export default function SwapScreen() {
     <SafeAreaView style={s.safe} edges={["top"]}>
       <ScrollView style={s.scroll} contentContainerStyle={s.content}>
         <Text style={s.title}>Swap Tokens</Text>
+
+        {isDevnet && (
+          <View style={s.devnetWarning}>
+            <Ionicons name="warning" size={16} color="#F59E0B" />
+            <Text style={s.devnetText}>
+              Jupiter only works on Mainnet. Switch network to swap.
+            </Text>
+          </View>
+        )}
 
         {/* From Token Card */}
         <View style={[s.card, { marginBottom: 10 }]}>
@@ -117,6 +131,24 @@ const s = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
   },
+
+  // devnet warning
+  devnetWarning: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(245, 158, 11, 0.1)",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  devnetText: {
+    color: "#F59E0B",
+    fontSize: 13,
+    flex: 1,
+  },
+
+  // token card
   title: {
     color: "#FFFFFF",
     fontSize: 28,
