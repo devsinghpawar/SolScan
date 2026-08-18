@@ -14,6 +14,7 @@ import {
   clusterApiUrl,
 } from "@solana/web3.js";
 import { useWalletStore } from "../stores/wallet-store";
+import { QuoteResponse } from "../services/jupiter";
 
 const APP_IDENTITY = {
   name: "SolScan",
@@ -34,6 +35,8 @@ export function useWallet() {
   const [connecting, setConnecting] = useState(false);
   const [sending, setSending] = useState(false);
   const isDevnet = useWalletStore((s) => s.isDevnet);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteData, setQuoteData] = useState<QuoteResponse | null>(null);
   const connectedPublicKey = useWalletStore((s) => s.connectedPublicKey);
   const setConnectedPublicKey = useWalletStore((s) => s.setConnectedPublicKey);
 
@@ -97,6 +100,13 @@ export function useWallet() {
     console.log("[useWallet] disconnect() called");
     setConnectedPublicKey(null);
   }, [setConnectedPublicKey]);
+
+  // ============================================
+  // CLEAR QUOTE
+  // ============================================
+  const clearQuote = useCallback(() => {
+    setQuoteData(null);
+  }, []);
 
   // ============================================
   // GET BALANCE
@@ -249,6 +259,7 @@ export function useWallet() {
     disconnect,
     getBalance,
     sendSOL,
+    clearQuote,
     connection,
   };
 }

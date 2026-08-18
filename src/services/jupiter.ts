@@ -87,3 +87,86 @@ export interface QuoteResponse {
     percent: number;
   }>;
 }
+
+// ============================================
+// GET QUOTE - how much will user receive?
+// ============================================
+export async function getSwapQuote(
+  inputMint: string,
+  outputMint: string,
+  amount: number,
+  slippageBps: number = 50,
+): Promise<QuoteResponse> {
+  console.log("[jupiter] ========== getSwapQuote ==========");
+  console.log("[jupiter] inputMint:", inputMint);
+  console.log("[jupiter] outputMint:", outputMint);
+  console.log("[jupiter] amount (smallest unit):", amount);
+  console.log("[jupiter] slippageBps:", slippageBps, `(${slippageBps / 100}%)`);
+
+  const params = new URLSearchParams({
+    inputMint,
+    outputMint,
+    amount: amount.toString(),
+    slippageBps: slippageBps.toString(),
+  });
+
+  const url = `${JUPITER_API}/quote?${params}`;
+  console.log("[jupiter] fetching quote from:", url);
+  console.log(
+    "[jupiter] using API key:",
+    JUPITER_API_KEY ? "yes (set)" : "no (missing!)",
+  );
+
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      console.log(`[jupiter] attempt ${attempt}/3...`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "x-api-key": JUPITER_API_KEY,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[jupiter] quote failed:", response.status, errorText);
+        throw new Error(`Jupiter quote failed: ${response.status}`);
+      }
+
+      const quote = await response.json();
+      console.log("[jupiter] quote received:");
+      console.log("[jupiter]   - inAmount:", quote.inAmount);
+      console.log("[jupiter]   - outAmount:", quote.outAmount);
+      console.log("[jupiter]   - priceImpactPct:", quote.priceImpactPct, "%");
+      console.log("[jupiter]   - routes:", quote.routePlan?.length || 0);
+
+      if (quote.routePlan?.length > 0) {
+        console.log(
+          "[jupiter]   - route:",
+          quote.routePlan
+            .map((r: { swapInfo: { label: string } }) => r.swapInfo.label)
+            .join(" -> "),
+        );
+      }
+      console.log("[jupiter] ======================================");
+      return quote;
+    } catch (err) {
+      lastError = err as Error;
+      console.log(`[jupiter] attempt ${attempt} failed:`, lastError.message);
+      if (attempt < 3) {
+        console.log("[jupiter] retrying in 1 second...");
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+  }
+
+  throw lastError || new Error("Failed to get quote after 3 attempts");
+}
