@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,13 +36,7 @@ export default function SwapScreen() {
   const inputInfo = TOKEN_INFO[inputToken];
   const outputInfo = TOKEN_INFO[outputToken];
 
-  console.log(inputInfo);
-  console.log(inputInfo.symbol[0]);
-
-  const [fromAmount, setFromAmount] = useState("100");
-  const [toAmount, setToAmount] = useState("0.28014");
-  const [fromToken, setFromToken] = useState("USDC");
-  const [toToken, setToToken] = useState("SOL");
+  console.log("wallet.connected: ", wallet.connected);
 
   const flipTokens = () => {
     setInputToken(outputToken);
@@ -51,12 +46,49 @@ export default function SwapScreen() {
     wallet.clearQuote();
   };
 
-  const handleSwap = () => {
-    if (!fromAmount) return Alert.alert("Enter an amount");
-    Alert.alert(
-      "Swap",
-      `Swapping ${fromAmount} ${fromToken} to ${toAmount} ${toToken}`,
-    );
+  // token picker
+  const openPicker = (target: "input" | "output") => {
+    setPickerTarget(target);
+    setPickerVisible(true);
+  };
+
+  const handleSwap = async () => {
+    if (!wallet.connected) {
+      return Alert.alert("Connect Wallet", "Connect your wallet first to swap");
+    }
+
+    if (isDevnet) {
+      return Alert.alert(
+        "Mainnet Only",
+        "Jupiter swaps only work on Mainnet. Switch to Mainnet in settings.",
+      );
+    }
+
+    if (!wallet.quoteData) {
+      return Alert.alert("No Quote", "Enter an amount to get a quote first");
+    }
+
+    try {
+      const result = await wallet.executeSwap(
+        wallet.quoteData,
+        inputInfo.symbol,
+        outputInfo.symbol,
+        outputInfo.decimals,
+      );
+
+      Alert.alert(
+        "Swap Successful!",
+        `Swapped ${inputAmount} ${result.inputSymbol} for ${result.outputAmount.toFixed(4)} ${result.outputSymbol}`,
+        [{ text: "OK" }],
+      );
+
+      setInputAmount("");
+      setOutputAmount("");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Something went wrong";
+      Alert.alert("Swap Failed", message);
+    }
   };
 
   return (
@@ -76,7 +108,10 @@ export default function SwapScreen() {
         {/* From Token Card */}
         <View style={[s.card, { marginBottom: 10 }]}>
           <View style={s.cardHeader}>
-            <TouchableOpacity style={s.tokenSelector}>
+            <TouchableOpacity
+              style={s.tokenSelector}
+              onPress={() => openPicker("input")}
+            >
               <View style={[s.tokenIcon, { backgroundColor: inputInfo.color }]}>
                 <Text style={s.tokenIconText}>{inputInfo.symbol[0]}</Text>
               </View>
@@ -107,31 +142,67 @@ export default function SwapScreen() {
         {/* To Token Card */}
         <View style={s.card}>
           <View style={s.cardHeader}>
-            <TouchableOpacity style={s.tokenSelector}>
-              <View style={[s.tokenIcon, { backgroundColor: "#2775CA" }]}>
-                <Text style={s.tokenIconText}>$</Text>
+            <TouchableOpacity
+              style={s.tokenSelector}
+              onPress={() => openPicker("output")}
+            >
+              <View
+                style={[s.tokenIcon, { backgroundColor: outputInfo.color }]}
+              >
+                <Text style={s.tokenIconText}>{outputInfo.symbol[0]}</Text>
               </View>
-              <Text style={s.tokenName}>{toToken}</Text>
+              <Text style={s.tokenName}>{outputInfo.symbol}</Text>
               <Ionicons name="chevron-down" size={18} color="#888" />
             </TouchableOpacity>
-            <TextInput
-              style={s.amountInput}
-              value={toAmount}
-              onChangeText={setToAmount}
-              keyboardType="numeric"
-              placeholder="0"
-              placeholderTextColor="#666"
-            />
+            <View style={s.outputContainer}>
+              {wallet.quoteLoading ? (
+                <ActivityIndicator color="#14F195" size="small" />
+              ) : (
+                <Text style={s.outputText}>{outputAmount || "0"}</Text>
+              )}
+            </View>
           </View>
           <View style={s.cardFooter}>
-            <Text style={s.labelText}>You Receive {toToken}</Text>
+            <Text style={s.labelText}>You Receive</Text>
           </View>
         </View>
 
         {/* Swap Button */}
-        <TouchableOpacity style={s.swapBtn} onPress={handleSwap}>
-          <Text style={s.swapBtnText}>Swap</Text>
-        </TouchableOpacity>
+        {wallet.connected ? (
+          <TouchableOpacity
+            style={[
+              s.swapBtn,
+              (!wallet.quoteData || wallet.swapping || isDevnet) &&
+                s.swapBtnDisabled,
+            ]}
+            onPress={handleSwap}
+            disabled={!wallet.quoteData || wallet.swapping || isDevnet}
+          >
+            {wallet.swapping ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={s.swapBtnText}>
+                {isDevnet
+                  ? "Switch to Mainnet"
+                  : wallet.quoteData
+                    ? "Swap"
+                    : "Enter an amount"}
+              </Text>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={s.connectBtn}
+            onPress={wallet.connect}
+            disabled={wallet.connecting}
+          >
+            {wallet.connecting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={s.connectBtnText}>Connect Wallet to Swap</Text>
+            )}
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

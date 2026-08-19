@@ -34,9 +34,10 @@ const decodeAddress = (address: string): PublicKey => {
 export function useWallet() {
   const [connecting, setConnecting] = useState(false);
   const [sending, setSending] = useState(false);
-  const isDevnet = useWalletStore((s) => s.isDevnet);
+  const [swapping, setSwapping] = useState(false);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteData, setQuoteData] = useState<QuoteResponse | null>(null);
+  const isDevnet = useWalletStore((s) => s.isDevnet);
   const connectedPublicKey = useWalletStore((s) => s.connectedPublicKey);
   const setConnectedPublicKey = useWalletStore((s) => s.setConnectedPublicKey);
 
@@ -100,13 +101,6 @@ export function useWallet() {
     console.log("[useWallet] disconnect() called");
     setConnectedPublicKey(null);
   }, [setConnectedPublicKey]);
-
-  // ============================================
-  // CLEAR QUOTE
-  // ============================================
-  const clearQuote = useCallback(() => {
-    setQuoteData(null);
-  }, []);
 
   // ============================================
   // GET BALANCE
@@ -250,16 +244,39 @@ export function useWallet() {
     [publicKey, connection, cluster],
   );
 
+  // ============================================
+  // FETCH SWAP QUOTE
+  // ============================================
+  const fetchSwapQuote = useCallback();
+
+  // ============================================
+  // CLEAR QUOTE
+  // ============================================
+  const clearQuote = useCallback(() => {
+    setQuoteData(null);
+  }, []);
+
+  // ============================================
+  // EXECUTE SWAP
+  // ============================================
+
+  const executeSwap = useCallback();
+
   return {
     publicKey,
     connected: !!publicKey,
     connecting,
     sending,
+    swapping,
+    quoteLoading,
+    quoteData,
     connect,
     disconnect,
     getBalance,
     sendSOL,
+    fetchSwapQuote,
     clearQuote,
+    executeSwap,
     connection,
   };
 }
