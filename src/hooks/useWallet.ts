@@ -247,7 +247,24 @@ export function useWallet() {
   // ============================================
   // FETCH SWAP QUOTE
   // ============================================
-  const fetchSwapQuote = useCallback();
+  const fetchSwapQuote = useCallback(
+    async (
+      inputMint: string,
+      outputMint: string,
+      inputAmount: number,
+      inputDecimals: number,
+    ) => {
+      if (isDevnet) {
+        setQuoteData(null);
+        return null;
+      }
+      setQuoteLoading(true);
+      // try{
+      //   const amountInSmallest = toSmallestUnit()
+      // }
+    },
+    [isDevnet],
+  );
 
   // ============================================
   // CLEAR QUOTE

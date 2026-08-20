@@ -38,6 +38,7 @@ export default function SwapScreen() {
 
   console.log("wallet.connected: ", wallet.connected);
 
+  // flip tokens
   const flipTokens = () => {
     setInputToken(outputToken);
     setOutputToken(inputToken);
@@ -166,6 +167,20 @@ export default function SwapScreen() {
             <Text style={s.labelText}>You Receive</Text>
           </View>
         </View>
+
+        {/* Quote Details */}
+        {wallet.quoteData && (
+          <View>
+            <View style={s.detailRow}>
+              <Text style={s.detailLabel}>Rate</Text>
+              <Text style={s.detailValue}>
+                1 {inputInfo.symbol} ={" "}
+                {(Number(outputAmount) / Number(inputAmount)).toFixed(4)}{" "}
+                {outputInfo.symbol}
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* Swap Button */}
         {wallet.connected ? (

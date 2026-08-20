@@ -1,5 +1,8 @@
-const JUPITER_API = "";
-const JUPITER_API_KEY = "";
+const JUPITER_API = "https://api.jup.ag/swap/v1";
+const JUPITER_API_KEY = process.env.EXPO_PUBLIC_JUPITER_API_KEY || "";
+
+console.log(JUPITER_API);
+console.log(JUPITER_API_KEY);
 
 // well-known token mints on solana mainnet
 export const TOKENS = {
@@ -143,6 +146,7 @@ export async function getSwapQuote(
 
       const quote = await response.json();
       console.log("[jupiter] quote received:");
+      console.log("[jupiter] quote:", quote);
       console.log("[jupiter]   - inAmount:", quote.inAmount);
       console.log("[jupiter]   - outAmount:", quote.outAmount);
       console.log("[jupiter]   - priceImpactPct:", quote.priceImpactPct, "%");
