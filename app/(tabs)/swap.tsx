@@ -1,6 +1,6 @@
 // app/(tabs)/swap.tsx
 // swap screen - at "/swap" route
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useWallet } from "../../src/hooks/useWallet";
 import { useWalletStore } from "../../src/stores/wallet-store";
-import { TOKEN_INFO, TOKENS } from "../../src/services/jupiter";
+import {
+  fromSmallestUnit,
+  TOKEN_INFO,
+  TOKENS,
+} from "../../src/services/jupiter";
 
 export default function SwapScreen() {
   const wallet = useWallet();
@@ -37,6 +41,49 @@ export default function SwapScreen() {
   const outputInfo = TOKEN_INFO[outputToken];
 
   console.log("wallet.connected: ", wallet.connected);
+
+  // fetch quote when input amount changes (debounced)
+  const fetchQuote = useCallback(async () => {
+    if (!inputAmount || Number(inputAmount) <= 0) {
+      setOutputAmount("");
+      wallet.clearQuote();
+      return;
+    }
+
+    if (isDevnet) {
+      setOutputAmount("N/A (Devnet)");
+      wallet.clearQuote();
+      return;
+    }
+
+    try {
+      const quote = await wallet.fetchSwapQuote(
+        inputToken,
+        outputToken,
+        Number(inputAmount),
+        inputInfo.decimals,
+      );
+      if (quote) {
+        const outValue = fromSmallestUnit(quote.outAmount, outputInfo.decimals);
+        setOutputAmount(outValue.toFixed(outputInfo.decimals > 6 ? 4 : 2));
+      }
+    } catch {
+      setOutputAmount("Error");
+    }
+  }, [
+    inputAmount,
+    inputToken,
+    outputToken,
+    inputInfo,
+    outputInfo,
+    isDevnet,
+    wallet,
+  ]);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchQuote, 2000);
+    return () => clearTimeout(timer);
+  }, [fetchQuote]);
 
   // flip tokens
   const flipTokens = () => {

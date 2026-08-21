@@ -14,7 +14,11 @@ import {
   clusterApiUrl,
 } from "@solana/web3.js";
 import { useWalletStore } from "../stores/wallet-store";
-import { QuoteResponse } from "../services/jupiter";
+import {
+  getSwapQuote,
+  QuoteResponse,
+  toSmallestUnit,
+} from "../services/jupiter";
 
 const APP_IDENTITY = {
   name: "SolScan",
@@ -259,9 +263,21 @@ export function useWallet() {
         return null;
       }
       setQuoteLoading(true);
-      // try{
-      //   const amountInSmallest = toSmallestUnit()
-      // }
+      try {
+        const amountInSmallest = toSmallestUnit(inputAmount, inputDecimals);
+        const quote = await getSwapQuote(
+          inputMint,
+          outputMint,
+          amountInSmallest,
+        );
+        setQuoteData(quote);
+        return quote;
+      } catch (error) {
+        console.error("[useWallet] quote error:", error);
+        setQuoteData(null);
+      } finally {
+        setQuoteLoading(false);
+      }
     },
     [isDevnet],
   );

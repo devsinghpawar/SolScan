@@ -1,7 +1,7 @@
 const JUPITER_API = "https://api.jup.ag/swap/v1";
 const JUPITER_API_KEY = process.env.EXPO_PUBLIC_JUPITER_API_KEY || "";
 
-console.log(JUPITER_API);
+console.log("JUPITER_API", JUPITER_API);
 console.log(JUPITER_API_KEY);
 
 // well-known token mints on solana mainnet
@@ -173,4 +173,18 @@ export async function getSwapQuote(
   }
 
   throw lastError || new Error("Failed to get quote after 3 attempts");
+}
+
+// ============================================
+// UNIT CONVERSION HELPERS
+// ============================================
+export function toSmallestUnit(amount: number, decimals: number): number {
+  return Math.round(amount * Math.pow(10, decimals));
+}
+
+export function fromSmallestUnit(
+  amount: number | string,
+  decimals: number,
+): number {
+  return Number(amount) / Math.pow(10, decimals);
 }
