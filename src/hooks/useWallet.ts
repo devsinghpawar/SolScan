@@ -271,6 +271,7 @@ export function useWallet() {
           amountInSmallest,
         );
         setQuoteData(quote);
+        console.log("quote", quote);
         return quote;
       } catch (error) {
         console.error("[useWallet] quote error:", error);

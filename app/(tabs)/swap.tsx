@@ -81,7 +81,7 @@ export default function SwapScreen() {
   ]);
 
   useEffect(() => {
-    const timer = setTimeout(fetchQuote, 2000);
+    const timer = setTimeout(fetchQuote, 20000);
     return () => clearTimeout(timer);
   }, [fetchQuote]);
 
@@ -217,7 +217,7 @@ export default function SwapScreen() {
 
         {/* Quote Details */}
         {wallet.quoteData && (
-          <View>
+          <View style={s.detailsCard}>
             <View style={s.detailRow}>
               <Text style={s.detailLabel}>Rate</Text>
               <Text style={s.detailValue}>
@@ -226,6 +226,33 @@ export default function SwapScreen() {
                 {outputInfo.symbol}
               </Text>
             </View>
+            <View style={s.detailRow}>
+              <Text style={s.detailLabel}>Price Impact</Text>
+              <Text
+                style={[
+                  s.detailValue,
+                  Number(wallet.quoteData.priceImpactPct) > 1 && {
+                    color: "#EF4444",
+                  },
+                ]}
+              >
+                {Number(wallet.quoteData.priceImpactPct).toFixed(2)}%
+              </Text>
+            </View>
+            <View style={s.detailRow}>
+              <Text style={s.detailLabel}>Slippage Tolerance</Text>
+              <Text style={s.detailValue}>0.5%</Text>
+            </View>
+            {wallet.quoteData.routePlan?.length > 0 && (
+              <View style={s.detailRow}>
+                <Text style={s.detailLabel}>Route</Text>
+                <Text style={s.detailValue}>
+                  {wallet.quoteData.routePlan
+                    .map((r) => r.swapInfo.label)
+                    .join(" -> ")}
+                </Text>
+              </View>
+            )}
           </View>
         )}
 
