@@ -1,6 +1,6 @@
 // app/(tabs)/swap.tsx
-// swap screen - at "/swap" route
-import { useCallback, useEffect, useState } from "react";
+// swap screen with jupiter dex aggregator integration
+import { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -15,14 +15,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useWallet } from "../../src/hooks/useWallet";
-import { useWalletStore } from "../../src/stores/wallet-store";
 import {
+  TOKENS,
+  TOKEN_INFO,
   AVAILABLE_TOKENS,
   fromSmallestUnit,
-  TOKEN_INFO,
-  TOKENS,
 } from "../../src/services/jupiter";
+import { useWallet } from "../../src/hooks/useWallet";
+import { useWalletStore } from "../../src/stores/wallet-store";
 
 export default function SwapScreen() {
   const wallet = useWallet();
@@ -42,8 +42,6 @@ export default function SwapScreen() {
 
   const inputInfo = TOKEN_INFO[inputToken];
   const outputInfo = TOKEN_INFO[outputToken];
-
-  console.log("wallet.connected: ", wallet.connected);
 
   // fetch quote when input amount changes (debounced)
   const fetchQuote = useCallback(async () => {
@@ -66,6 +64,7 @@ export default function SwapScreen() {
         Number(inputAmount),
         inputInfo.decimals,
       );
+
       if (quote) {
         const outValue = fromSmallestUnit(quote.outAmount, outputInfo.decimals);
         setOutputAmount(outValue.toFixed(outputInfo.decimals > 6 ? 4 : 2));
@@ -84,7 +83,7 @@ export default function SwapScreen() {
   ]);
 
   useEffect(() => {
-    const timer = setTimeout(fetchQuote, 10000);
+    const timer = setTimeout(fetchQuote, 1500);
     return () => clearTimeout(timer);
   }, [fetchQuote]);
 
@@ -97,6 +96,26 @@ export default function SwapScreen() {
     wallet.clearQuote();
   };
 
+  // token picker
+  const openPicker = (target: "input" | "output") => {
+    setPickerTarget(target);
+    setPickerVisible(true);
+  };
+
+  const selectToken = (mint: string) => {
+    if (pickerTarget === "input") {
+      if (mint === outputToken) setOutputToken(inputToken);
+      setInputToken(mint);
+    } else {
+      if (mint === inputToken) setInputToken(outputToken);
+      setOutputToken(mint);
+    }
+    setPickerVisible(false);
+    wallet.clearQuote();
+    setOutputAmount("");
+  };
+
+  // execute swap
   const handleSwap = async () => {
     if (!wallet.connected) {
       return Alert.alert("Connect Wallet", "Connect your wallet first to swap");
@@ -134,25 +153,6 @@ export default function SwapScreen() {
         error instanceof Error ? error.message : "Something went wrong";
       Alert.alert("Swap Failed", message);
     }
-  };
-
-  // token picker
-  const openPicker = (target: "input" | "output") => {
-    setPickerTarget(target);
-    setPickerVisible(true);
-  };
-
-  const selectToken = (mint: string) => {
-    if (pickerTarget === "input") {
-      if (mint === outputToken) setOutputToken(inputToken);
-      setInputToken(mint);
-    } else {
-      if (mint === inputToken) setInputToken(outputToken);
-      setOutputToken(mint);
-    }
-    setPickerVisible(false);
-    wallet.clearQuote();
-    setOutputAmount("");
   };
 
   // token picker modal
