@@ -176,6 +176,51 @@ export async function getSwapQuote(
 }
 
 // ============================================
+// GET SWAP TRANSACTION - ready to sign
+// ============================================
+export async function getSwapTransaction(
+  quoteResponse: QuoteResponse,
+  userPublicKey: string,
+): Promise<string> {
+  const swapUrl = `${JUPITER_API}/swap`;
+  console.log("[JUPITER] posting to:", swapUrl);
+
+  const requestBody = {
+    quoteResponse,
+    userPublicKey,
+    wrapAndUnwrapSol: true,
+    dynamicComputerUnitLimit: true,
+    prioritizationFeeLamports: {
+      priorityLevelWithMaxLamports: {
+        // priority level: medium, high, or veryHigh
+        priorityLevel: "high",
+        // max lamports willing to pay for priority (cap to prevent overpaying)
+        maxLamports: 1000000, // 0.001 SOL max priority fee
+      },
+    },
+  };
+
+  const response = await fetch(swapUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "x-api-key": JUPITER_API_KEY,
+    },
+    body: JSON.stringify(requestBody),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("[jupiter] swap tx failed:", response.status, errorText);
+    throw new Error(`Jupiter swap failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  console.log("data:", data);
+  return data.swapTransaction;
+}
+
+// ============================================
 // UNIT CONVERSION HELPERS
 // ============================================
 export function toSmallestUnit(amount: number, decimals: number): number {

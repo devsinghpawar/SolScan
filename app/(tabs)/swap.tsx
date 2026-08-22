@@ -83,7 +83,7 @@ export default function SwapScreen() {
   ]);
 
   useEffect(() => {
-    const timer = setTimeout(fetchQuote, 1500);
+    const timer = setTimeout(fetchQuote, 15000);
     return () => clearTimeout(timer);
   }, [fetchQuote]);
 

@@ -12,10 +12,13 @@ import {
   SystemProgram,
   LAMPORTS_PER_SOL,
   clusterApiUrl,
+  VersionedTransaction,
 } from "@solana/web3.js";
 import { useWalletStore } from "../stores/wallet-store";
 import {
+  fromSmallestUnit,
   getSwapQuote,
+  getSwapTransaction,
   QuoteResponse,
   toSmallestUnit,
 } from "../services/jupiter";
@@ -294,7 +297,95 @@ export function useWallet() {
   // EXECUTE SWAP
   // ============================================
 
-  const executeSwap = useCallback();
+  const executeSwap = useCallback(
+    async (
+      quote: QuoteResponse,
+      inputSymbol: string,
+      outputSymbol: string,
+      outputDecimals: number,
+    ) => {
+      if (!publicKey) {
+        throw new Error("Wallet not connected");
+      }
+
+      if (isDevnet) {
+        throw new Error("Jupiter swaps only work on Mainnet");
+      }
+
+      setSwapping(true);
+      try {
+        const swapTxBase64 = await getSwapTransaction(
+          quote,
+          publicKey.toBase58(),
+        );
+        const swapTxBuf = Buffer.from(swapTxBase64, "base64");
+        const transaction = VersionedTransaction.deserialize(swapTxBuf);
+
+        const signedTransaction = await transact(
+          async (wallet: Web3MobileWallet) => {
+            console.log("[useWallet] authorizing for swap...");
+            await wallet.authorize({
+              cluster: "mainnet-beta",
+              identity: APP_IDENTITY,
+            });
+
+            console.log("[useWallet] signing swap transaction...");
+            const signedTxs = await wallet.signTransactions({
+              transactions: [transaction],
+            });
+
+            if (!signedTxs || signedTxs.length === 0) {
+              throw new Error("No signed transaction returned");
+            }
+
+            return signedTxs[0];
+          },
+        );
+
+        console.log("[useWallet] swap signed, waiting before send...");
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        const serialized = signedTransaction.serialize();
+        let txSignature: string | null = null;
+
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            txSignature = await connection.sendRawTransaction(serialized, {
+              skipPreflight: true,
+              maxRetries: 2,
+            });
+            console.log("[useWallet] swap sent, signature:", txSignature);
+            break;
+          } catch (err) {
+            console.log(`[useWallet] swap attempt ${attempt} failed`);
+            if (attempt < 3) {
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+          }
+        }
+
+        if (!txSignature) {
+          throw new Error("Failed to send swap transaction after 3 attempts");
+        }
+
+        const outputAmount = fromSmallestUnit(quote.outAmount, outputDecimals);
+        setQuoteData(null);
+
+        return {
+          signature: txSignature,
+          inputSymbol,
+          outputSymbol,
+          outputAmount,
+        };
+      } catch (error) {
+        console.error("[useWallet] swap error:", error);
+        throw error;
+      } finally {
+        setSwapping(false);
+      }
+    },
+    [publicKey, connection, isDevnet],
+  );
 
   return {
     publicKey,
