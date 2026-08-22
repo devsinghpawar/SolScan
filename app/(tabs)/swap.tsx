@@ -10,12 +10,15 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Modal,
+  FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useWallet } from "../../src/hooks/useWallet";
 import { useWalletStore } from "../../src/stores/wallet-store";
 import {
+  AVAILABLE_TOKENS,
   fromSmallestUnit,
   TOKEN_INFO,
   TOKENS,
@@ -81,7 +84,7 @@ export default function SwapScreen() {
   ]);
 
   useEffect(() => {
-    const timer = setTimeout(fetchQuote, 20000);
+    const timer = setTimeout(fetchQuote, 10000);
     return () => clearTimeout(timer);
   }, [fetchQuote]);
 
@@ -92,12 +95,6 @@ export default function SwapScreen() {
     setInputAmount(outputAmount);
     setOutputAmount("");
     wallet.clearQuote();
-  };
-
-  // token picker
-  const openPicker = (target: "input" | "output") => {
-    setPickerTarget(target);
-    setPickerVisible(true);
   };
 
   const handleSwap = async () => {
@@ -138,6 +135,78 @@ export default function SwapScreen() {
       Alert.alert("Swap Failed", message);
     }
   };
+
+  // token picker
+  const openPicker = (target: "input" | "output") => {
+    setPickerTarget(target);
+    setPickerVisible(true);
+  };
+
+  const selectToken = (mint: string) => {
+    if (pickerTarget === "input") {
+      if (mint === outputToken) setOutputToken(inputToken);
+      setInputToken(mint);
+    } else {
+      if (mint === inputToken) setInputToken(outputToken);
+      setOutputToken(mint);
+    }
+    setPickerVisible(false);
+    wallet.clearQuote();
+    setOutputAmount("");
+  };
+
+  // token picker modal
+  const renderTokenPicker = () => (
+    <Modal
+      visible={pickerVisible}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setPickerVisible(false)}
+    >
+      <View style={s.modalOverlay}>
+        <View style={s.modalContent}>
+          <View style={s.modalHeader}>
+            <Text style={s.modalTitle}>Select Token</Text>
+            <TouchableOpacity onPress={() => setPickerVisible(false)}>
+              <Ionicons name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={AVAILABLE_TOKENS}
+            keyExtractor={(item) => item}
+            renderItem={({ item }) => {
+              const info = TOKEN_INFO[item];
+              const isSelected =
+                pickerTarget === "input"
+                  ? item === inputToken
+                  : item === outputToken;
+              return (
+                <TouchableOpacity
+                  style={[s.tokenOption, isSelected && s.tokenOptionSelected]}
+                  onPress={() => selectToken(item)}
+                >
+                  <View style={[s.tokenIcon, { backgroundColor: info.color }]}>
+                    <Text style={s.tokenIconText}>{info.symbol[0]}</Text>
+                  </View>
+                  <View style={s.tokenOptionInfo}>
+                    <Text style={s.tokenOptionSymbol}>{info.symbol}</Text>
+                    <Text style={s.tokenOptionName}>{info.name}</Text>
+                  </View>
+                  {isSelected && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={24}
+                      color="#14F195"
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
@@ -293,6 +362,8 @@ export default function SwapScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      {renderTokenPicker()}
     </SafeAreaView>
   );
 }
