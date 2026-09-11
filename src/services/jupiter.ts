@@ -12,6 +12,7 @@ export const TOKENS = {
   BONK: "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
   JUP: "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN",
   WIF: "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
+  WBTC: "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh", // Wrapped BTC (Wormhole)
 };
 
 // token metadata for display
@@ -55,15 +56,22 @@ export const TOKEN_INFO: Record<
     decimals: 6,
     color: "#E91E63",
   },
+  [TOKENS.WBTC]: {
+    symbol: "WBTC",
+    name: "Wrapped BTC",
+    decimals: 8,
+    color: "#F7931A",
+  },
 };
 
 // list of available tokens for the picker
 export const AVAILABLE_TOKENS = [
-  TOKENS.SOL,
-  TOKENS.USDC,
   TOKENS.USDT,
-  TOKENS.BONK,
+  TOKENS.SOL,
+  TOKENS.WBTC,
+  TOKENS.USDC,
   TOKENS.JUP,
+  TOKENS.BONK,
   TOKENS.WIF,
 ];
 
