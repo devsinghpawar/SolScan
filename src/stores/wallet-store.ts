@@ -15,6 +15,7 @@ interface WalletState {
   removeFavorite: (address: string) => void;
   isFavorite: (address: string) => boolean;
   addToHistory: (address: string) => void;
+  removeFromHistory: (address: string) => void;
   clearHistory: () => void;
   toggleNetwork: () => void;
   setConnectedPublicKey: (publicKey: string | null) => void;
@@ -51,6 +52,11 @@ export const useWalletStore = create<WalletState>()(
             // Remove duplicates — put the latest search first
             ...state.searchHistory.filter((a) => a !== address),
           ].slice(0, 20), // Keep only last 20
+        })),
+
+      removeFromHistory: (address) =>
+        set((state) => ({
+          searchHistory: state.searchHistory.filter((a) => a !== address),
         })),
 
       clearHistory: () => set({ searchHistory: [] }),

@@ -21,6 +21,7 @@ import { useWalletStore } from "../../src/stores/wallet-store";
 import FavoriteButton from "../../src/components/FavoriteButton";
 import { useWallet } from "../../src/hooks/useWallet";
 import { ConnectButton } from "../../src/components/ConnectButton";
+import SwipableHistoryItem from "../../src/components/SwipableHistoryItem";
 
 export default function WalletScreen() {
   const router = useRouter();
@@ -224,17 +225,15 @@ export default function WalletScreen() {
             >
               <Text style={s.historyTitle}>Recent Searches</Text>
               {searchHistory.slice(0, 5).map((addr, index) => (
-                <TouchableOpacity
+                <SwipableHistoryItem
                   key={addr}
-                  style={s.historyItem}
+                  address={addr}
+                  index={index}
                   onPress={() => searchFromHistory(addr)}
-                >
-                  <Ionicons name="time-outline" size={16} color="#6B7280" />
-                  <Text style={s.historyAddress} numberOfLines={1}>
-                    {short(addr, 8)}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={16} color="#6B7280" />
-                </TouchableOpacity>
+                  onDelete={() =>
+                    useWalletStore.getState().removeFromHistory(addr)
+                  }
+                />
               ))}
             </Animated.View>
           )}
