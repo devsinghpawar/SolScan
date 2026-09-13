@@ -18,7 +18,7 @@ export default function TabLayout() {
           borderTopWidth: 1,
           paddingBottom: 8,
           paddingTop: 12,
-          height: 30 + insets.bottom,
+          height: 50 + insets.bottom,
           // paddingBottom: insets.bottom,
         },
         tabBarLabelStyle: {
