@@ -14,6 +14,7 @@ export default function RootLayout() {
         {/* token detail screen stacks on top of tabs */}
         <Stack.Screen name="token/[mint]" />
         <Stack.Screen name="watchlist" />
+        <Stack.Screen name="send" />
       </Stack>
     </SafeAreaProvider>
   );
