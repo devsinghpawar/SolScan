@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,8 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useWalletStore } from "../../src/stores/wallet-store";
 import FavoriteButton from "../../src/components/FavoriteButton";
+import { useWallet } from "../../src/hooks/useWallet";
+import { ConnectButton } from "../../src/components/ConnectButton";
 
 export default function WalletScreen() {
   const router = useRouter();
@@ -30,6 +32,7 @@ export default function WalletScreen() {
   const searchHistory = useWalletStore((s) => s.searchHistory);
   const isDevnet = useWalletStore((s) => s.isDevnet);
   const toggleNetwork = useWalletStore((s) => s.toggleNetwork);
+  const wallet = useWallet();
 
   // Use the correct RPC based on network toggle
   const RPC = isDevnet
@@ -128,6 +131,13 @@ export default function WalletScreen() {
     setAddress("So11111111111111111111111111111111111111112");
     // setAddress("86xCnPeV69n6t3DnyGvkKobf9FdN2H9oiVDdaMpo2MMY");
   };
+  console.log("line 134", wallet.connected);
+  console.log("wallet.publicKey", wallet.publicKey);
+  console.log("address", address);
+
+  useEffect(() => {
+    setAddress(wallet.publicKey?.toBase58() ?? "");
+  }, [wallet.publicKey]);
 
   const clearResults = () => {
     setAddress("");
@@ -145,11 +155,24 @@ export default function WalletScreen() {
             <Text style={s.subtitle}>Explore any Solana wallet</Text>
           </View>
 
-          {/* Network indicator */}
-          <TouchableOpacity style={s.networkToggle} onPress={toggleNetwork}>
-            <View style={[s.networkDot, isDevnet && s.networkDotDevnet]} />
-            <Text style={s.networkText}>{isDevnet ? "Devnet" : "Mainnet"}</Text>
-          </TouchableOpacity>
+          <View style={s.headerRight}>
+            {/* Network indicator */}
+            <TouchableOpacity style={s.networkToggle} onPress={toggleNetwork}>
+              <View style={[s.networkDot, isDevnet && s.networkDotDevnet]} />
+              <Text style={s.networkText}>
+                {isDevnet ? "Devnet" : "Mainnet"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Wallet Connect button */}
+            <ConnectButton
+              connected={wallet.connected}
+              connecting={wallet.connecting}
+              publicKey={wallet.publicKey?.toBase58() ?? null}
+              onConnect={wallet.connect}
+              onDisconnect={wallet.disconnect}
+            />
+          </View>
         </View>
 
         <View style={s.inputContainer}>
@@ -304,6 +327,14 @@ const s = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 28,
   },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+    maxWidth: "52%", // I have to change this latter
+  },
   title: {
     color: "#FFFFFF",
     fontSize: 32,
@@ -313,7 +344,6 @@ const s = StyleSheet.create({
   subtitle: {
     color: "#6B7280",
     fontSize: 15,
-    marginBottom: 28,
   },
 
   networkToggle: {
