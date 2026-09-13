@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import Animated, { FadeInDown, FadeOutUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,6 +21,7 @@ import { useWalletStore } from "../../src/stores/wallet-store";
 import FavoriteButton from "../../src/components/FavoriteButton";
 import { useWallet } from "../../src/hooks/useWallet";
 import { ConnectButton } from "../../src/components/ConnectButton";
+import SwipableHistoryItem from "../../src/components/SwipableHistoryItem";
 
 export default function WalletScreen() {
   const router = useRouter();
@@ -216,26 +218,32 @@ export default function WalletScreen() {
 
           {/* Search History - show before any search */}
           {searchHistory.length > 0 && balance === null && (
-            <View style={s.historySection}>
+            <Animated.View
+              style={s.historySection}
+              entering={FadeInDown.delay(100).springify()}
+              exiting={FadeOutUp}
+            >
               <Text style={s.historyTitle}>Recent Searches</Text>
-              {searchHistory.slice(0, 5).map((addr) => (
-                <TouchableOpacity
+              {searchHistory.slice(0, 5).map((addr, index) => (
+                <SwipableHistoryItem
                   key={addr}
-                  style={s.historyItem}
+                  address={addr}
+                  index={index}
                   onPress={() => searchFromHistory(addr)}
-                >
-                  <Ionicons name="time-outline" size={16} color="#6B7280" />
-                  <Text style={s.historyAddress} numberOfLines={1}>
-                    {short(addr, 8)}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={16} color="#6B7280" />
-                </TouchableOpacity>
+                  onDelete={() =>
+                    useWalletStore.getState().removeFromHistory(addr)
+                  }
+                />
               ))}
-            </View>
+            </Animated.View>
           )}
 
           {balance !== null && (
-            <View style={s.card}>
+            <Animated.View
+              style={s.card}
+              entering={FadeInDown.delay(100).springify()}
+              exiting={FadeOutUp}
+            >
               <View style={s.favoriteWrapper}>
                 <FavoriteButton address={address.trim()} />
               </View>
@@ -254,40 +262,50 @@ export default function WalletScreen() {
                   <Text style={s.sendNavText}>Send SOL</Text>
                 </TouchableOpacity>
               )}
-            </View>
+            </Animated.View>
           )}
 
           {tokens.length > 0 && (
-            <>
+            <Animated.View
+              entering={FadeInDown.delay(200).springify()}
+              exiting={FadeOutUp}
+            >
               <Text style={s.section}>Tokens ({tokens.length})</Text>
-              <FlatList
-                data={tokens}
-                keyExtractor={(t, i) => `${t.mint}-${i}`}
-                scrollEnabled={false}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={s.row}
-                    onPress={() =>
-                      router.push(`/token/${item.mint}?amount=${item.amount}`)
-                    }
+
+              {tokens.map(
+                (item: { mint: string; amount: number }, index: number) => (
+                  <Animated.View
+                    key={item.mint}
+                    entering={FadeInDown.delay(250 + index * 50).springify()}
+                    exiting={FadeOutUp}
                   >
-                    <Text style={s.mint}>{short(item.mint, 6)}</Text>
-                    <View style={s.tokenRight}>
-                      <Text style={s.amount}>{item.amount}</Text>
-                      <Ionicons
-                        name="chevron-forward"
-                        size={16}
-                        color="#6B7280"
-                      />
-                    </View>
-                  </TouchableOpacity>
-                )}
-              />
-            </>
+                    <TouchableOpacity
+                      style={s.row}
+                      onPress={() =>
+                        router.push(`/token/${item.mint}?amount=${item.amount}`)
+                      }
+                    >
+                      <Text style={s.mint}>{short(item.mint, 6)}</Text>
+                      <View style={s.tokenRight}>
+                        <Text style={s.amount}>{item.amount}</Text>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={16}
+                          color="#6B7280"
+                        />
+                      </View>
+                    </TouchableOpacity>
+                  </Animated.View>
+                ),
+              )}
+            </Animated.View>
           )}
 
           {txns.length > 0 && (
-            <>
+            <Animated.View
+              entering={FadeInDown.delay(300).springify()}
+              exiting={FadeOutUp}
+            >
               <Text style={s.section}>Recent Transactions</Text>
               <FlatList
                 data={txns}
@@ -317,7 +335,7 @@ export default function WalletScreen() {
                   </TouchableOpacity>
                 )}
               />
-            </>
+            </Animated.View>
           )}
 
           <View style={{ height: 100 }} />
